@@ -126,36 +126,174 @@ resource "aws_route_table_association" "private" {
 
 # SG
 resource "aws_security_group" "main" {
-  name = "${var.project_name}-main-sg"
+  name        = "${var.project_name}-main-sg"
   description = "Main security group for VPC"
-  vpc_id = aws_vpc.main.id
+  vpc_id      = aws_vpc.main.id
 
   ingress {
     description = "Allow HTTPS inbound"
-    from_port = 443
-    to_port = 443
-    protocol = "tcp"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
     description = "Allow HTTP inbound"
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["10.0.0.0/16"]
   }
 
   egress {
     description = "Allow all outbound"
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   tags = {
-    Name = "${var.project_name}-main-sg"
+    Name        = "${var.project_name}-main-sg"
+    Environment = var.environment
+  }
+}
+
+# NACL Public Subnet
+resource "aws_network_acl" "public" {
+  vpc_id     = aws_vpc.main.id
+  subnet_ids = aws_subnet.public[*].id
+
+  ingress {
+    rule_no    = 100
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 80
+    to_port    = 80
+  }
+
+  ingress {
+    rule_no    = 110
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 443
+    to_port    = 443
+  }
+
+  ingress {
+    rule_no    = 120
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 1024
+    to_port    = 65535
+  }
+  ingress {
+    rule_no    = 130
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/16"
+    from_port  = 0
+    to_port    = 65535
+  }
+
+  # Outbount
+  egress {
+    rule_no    = 100
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 80
+    to_port    = 80
+  }
+  egress {
+    rule_no    = 110
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 443
+    to_port    = 443
+  }
+  egress {
+    rule_no    = 120
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 1024
+    to_port    = 65535
+  }
+  egress {
+    rule_no    = 130
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/16"
+    from_port  = 0
+    to_port    = 65535
+  }
+
+  tags = {
+    Name        = "${var.project_name}-public-nacl"
+    Environment = var.environment
+  }
+}
+
+# NACL Private
+resource "aws_network_acl" "private" {
+  vpc_id     = aws_vpc.main.id
+  subnet_ids = aws_subnet.private[*].id
+
+  # Inbound
+  ingress {
+    rule_no    = 100
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "10.0.0.0/16"
+    from_port  = 0
+    to_port    = 65535
+  }
+
+  ingress {
+    rule_no    = 110
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 1024
+    to_port    = 65535
+  }
+
+  # Outbound
+  egress {
+    rule_no    = 100
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "10.0.0.0/16"
+    from_port  = 0
+    to_port    = 65535
+  }
+
+  egress {
+    rule_no    = 110
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 443
+    to_port    = 443
+  }
+
+  egress {
+    rule_no    = 120
+    protocol   = "tcp"
+    action     = "allow"
+    cidr_block = "0.0.0.0/0"
+    from_port  = 80
+    to_port    = 80
+  }
+
+  tags = {
+    Name        = "${var.project_name}-private-nacl"
     Environment = var.environment
   }
 }
