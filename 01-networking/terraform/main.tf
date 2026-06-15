@@ -123,3 +123,39 @@ resource "aws_route_table_association" "private" {
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private[count.index].id
 }
+
+# SG
+resource "aws_security_group" "main" {
+  name = "${var.project_name}-main-sg"
+  description = "Main security group for VPC"
+  vpc_id = aws_vpc.main.id
+
+  ingress {
+    description = "Allow HTTPS inbound"
+    from_port = 443
+    to_port = 443
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Allow HTTP inbound"
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  egress {
+    description = "Allow all outbound"
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.project_name}-main-sg"
+    Environment = var.environment
+  }
+}
