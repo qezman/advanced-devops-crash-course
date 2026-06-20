@@ -7,6 +7,13 @@ terraform {
       version = "~> 5.0"
     }
   }
+  backend "s3" {
+    bucket         = "devops-course-tfstate-203637463799"
+    key            = "03-eks/terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "devops-course-tfstate-lock"
+    encrypt        = true
+  }
 }
 
 provider "aws" {
